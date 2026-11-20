@@ -148,7 +148,16 @@ def trending_draws(rng: random.Random, case: dict, idx: int, tier: str,
     pools = [float(read["players_tracked"]) for read in history]
     last = len(history) - 1
     pool_last = pools[last]
-    earners_last = case["_earners"][idx][last]
+    # The last read may lack this trophy (its earners entry is None); fall
+    # back to the most recent read that lists it, the same scan forecast_case
+    # makes for the rate. forecast_case only calls here when some read lists
+    # the trophy, so the scan always finds a value; without it the max()
+    # calls below raise on None and the whole case's output is lost.
+    earners_last = None
+    for j in range(last, -1, -1):
+        if case["_earners"][idx][j] is not None:
+            earners_last = case["_earners"][idx][j]
+            break
 
     days = horizon_h / 24.0
     damped = 48.0 * (1.0 - math.exp(-horizon_h / 48.0))
